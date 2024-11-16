@@ -1,0 +1,16 @@
+name: MCSync
+main: com.mcsync.plugin.mcsync
+version: '1.2.0'
+load: STARTUP
+author: MCSync
+website : https://mcsync.live
+softdepend:
+    - LuckPerms
+commands:
+    mcsync-reload:
+        description: Reloads the plugin configuration
+    mcsync:
+        usage: /<command> [help|get|set]
+        aliases: [mcs]
+        description: Command for MCSync.
+        permission: mcsync.admin
