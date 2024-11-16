@@ -147,6 +147,9 @@ public class mcsync extends JavaPlugin implements Listener {
                 JSONObject data = new JSONObject(response.toString());
                 authorizePlayer = data.getBoolean("subscriber");
                 tier = data.getInt("tier");
+                if (parameters.contains("debug")) {
+                    getLogger().info("Response: " + response.toString());
+                }
             }
         } catch (IOException e) {
             getLogger().log(Level.SEVERE, "Error during HTTP request: {0}", e.getMessage());
@@ -176,9 +179,8 @@ public class mcsync extends JavaPlugin implements Listener {
         } else if (tier == 3) {
             luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("sub-t3")).build()));
         }
-
         if (parameters.contains("debug")) {
-            getLogger().warning("Invalid permission for tier: " + tier);
+            getLogger().warning("Tier: " + tier);
         }
         return;
 
