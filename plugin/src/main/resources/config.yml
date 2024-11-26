@@ -5,24 +5,34 @@
 #   |_|  |_| \___||___/  |_|  |_|\_| \___|
 #
 ################################################# 
-# Welcome to the MCSyncPermissions Configuration file! 
-# Below are the permissions for given ranks. You may change the permission nodes if you would like.*
+# Welcome to the MCSync Permissions Configuration file! 
+# MCSync Permissions does the same things as the base MCSync plugin, however this version will allow you to
+#  assign users to specific LuckPerms groups, or give them a specific LuckPerms Permission Node for use in other plugins, such as Skript .
 #
-# Please install MCSync to your disocrd server and insure Twitch Integration is set. 
+# This plugin requires the use of the MCSync Discord Bot in your Discord Server. Please make sure you
+#  set that up as you will need the API token it generates for you. 
 # 
 # Additional Parameters are as follows;
-# debug - This will output additional information to the console
-# 2way - This will enable 2 way communication with the MCSync api for additional support. 
+# debug - This will output additional information to the console.
+# 2way - This will enable 2 way communication with the MCSync API for additional support. 
+#        Please only enable this if instructed by MCSync Support.
 #
 #
 
 
 token: KEYHERE
-parameters: none
+
+#default "none"
+parameters: none 
+
+#default "You are not authorized to join this server."
 fail_message: You are not authorized to join this server.
 
+# permissionsMode Options
+#  group - Users will be assigned to this role name using LuckPerms
+#  node -  Users will be assigned this node using LuckPerms
 
-# Below are nodes if useing Lucky Perms
+permissionsMode: group
 
 overide: mcsyncPermissions.Overide
 sub-t1: mcsyncPermissions.SubTier1
