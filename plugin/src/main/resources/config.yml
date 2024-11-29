@@ -11,17 +11,14 @@
 #
 # This plugin requires the use of the MCSync Discord Bot in your Discord Server. Please make sure you
 #  set that up as you will need the API token it generates for you. 
-# 
+#
+
+token: KEYHERE
+
 # Additional Parameters are as follows;
 # debug - This will output additional information to the console.
 # 2way - This will enable 2 way communication with the MCSync API for additional support. 
 #        Please only enable this if instructed by MCSync Support.
-#
-#
-
-
-token: KEYHERE
-
 #default "none"
 parameters: none 
 

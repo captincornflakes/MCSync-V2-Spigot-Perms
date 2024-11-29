@@ -8,6 +8,7 @@ import java.net.URL;
 import java.util.UUID;
 import java.util.logging.Level;
 
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -30,7 +31,7 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 
 public class mcsync extends JavaPlugin implements Listener {
-
+    private Metrics metrics;
     private LuckPerms luckPerms;
     @SuppressWarnings("FieldMayBeFinal")
     private FileConfiguration config = getConfig();
@@ -54,6 +55,11 @@ public class mcsync extends JavaPlugin implements Listener {
         String parameters = this.config.getString("parameters");
         getLogger().info("MCSync parameters: " + parameters);
 
+        //Enable Bstats
+       // int pluginId = 24033;
+        //metrics = new Metrics(this, pluginId);
+        //getLogger().info("bStats initialized. " + isMetricsRunning());
+
         // Check if LuckPerms plugin is available
         Plugin plugin = Bukkit.getPluginManager().getPlugin("LuckPerms");
         if (plugin != null && plugin.isEnabled()) {
@@ -68,6 +74,9 @@ public class mcsync extends JavaPlugin implements Listener {
             System.out.println("LuckPerms plugin is not available.");
             this.luckPerms = null;
         }
+    }
+    public boolean isMetricsRunning() {
+        return metrics != null;
     }
 
     public LuckPerms getLuckPerms() {
@@ -117,6 +126,7 @@ public class mcsync extends JavaPlugin implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         String token = config.getString("token");
+        String permissionsMode = config.getString("permissionsMode");
         String parameters = config.getString("parameters", "").toLowerCase();
         boolean authorizePlayer = false;
         int tier = 0;
@@ -160,30 +170,60 @@ public class mcsync extends JavaPlugin implements Listener {
         }
 
         if (authorizePlayer) {
+            if (parameters.contains("debug")) {
+                getLogger().warning("ok: " + tier + " " + permissionsMode);
+            }
             assignPermissions(player, uuid, parameters, tier);
         } else {
             player.kickPlayer(config.getString("fail_message", "You are not authorized to join this server."));
         }
     }
-
+    //permissionsMode
     private void assignPermissions(Player player, UUID uuid, String parameters, int tier) {
         if (luckPerms == null) {
+            if (parameters.contains("debug")) {
+                getLogger().warning("Luckperms Null Error");
+            }
             return;
         }
-        if (tier == 0) {
-            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("overide")).build()));
-        } else if (tier == 1) {
-            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("sub-t1")).build()));
-        } else if (tier == 2) {
-            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("sub-t2")).build()));
-        } else if (tier == 3) {
-            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("sub-t3")).build()));
+        String permissionsMode = config.getString("permissionsMode");
+        if ("node".equals(permissionsMode)) {
+            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().remove(Node.builder(config.getString("overide")).build()));
+            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().remove(Node.builder(config.getString("sub-t1")).build()));
+            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().remove(Node.builder(config.getString("sub-t2")).build()));
+            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().remove(Node.builder(config.getString("sub-t3")).build()));
+            if (tier == 0) {
+                luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("overide")).build()));
+            } else if (tier == 1) {
+                luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("sub-t1")).build()));
+            } else if (tier == 2) {
+                luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("sub-t2")).build()));
+            } else if (tier == 3) {
+                luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("sub-t3")).build()));
+            }
+        }
+        else if ("group".equals(permissionsMode)){
+            luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().remove(Node.builder("group." + config.getString("overide")).build());});
+            luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().remove(Node.builder("group." + config.getString("sub-t1")).build());});
+            luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().remove(Node.builder("group." + config.getString("sub-t2")).build());});
+            luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().remove(Node.builder("group." + config.getString("sub-t3")).build());});
+            if (tier == 0) {
+                luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().add(Node.builder("group." + config.getString("overide")).build());});
+            } else if (tier == 1) {
+                luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().add(Node.builder("group." + config.getString("sub-t1")).build());});
+            } else if (tier == 2) {
+                luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().add(Node.builder("group." + config.getString("sub-t2")).build());});
+            } else if (tier == 3) {
+                luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().add(Node.builder("group." + config.getString("sub-t3")).build());});
+            }
+        }
+        else {
+            getLogger().warning("Undetermined Group/Node: " + permissionsMode);
         }
         if (parameters.contains("debug")) {
-            getLogger().warning("Tier: " + tier);
+            getLogger().warning("Tier: " + tier + " " + permissionsMode);
         }
         return;
-
     }
 
     public class CommandMcsync implements CommandExecutor {
@@ -215,4 +255,5 @@ public class mcsync extends JavaPlugin implements Listener {
             return true;
         }
     }
+
 }
