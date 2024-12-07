@@ -168,15 +168,16 @@ public class mcsync extends JavaPlugin implements Listener {
                 connection.disconnect();
             }
         }
-
-        if (authorizePlayer) {
-            if (parameters.contains("debug")) {
-                getLogger().warning("ok: " + tier + " " + permissionsMode);
+        if (!parameters.contains("perms")) {
+            if (authorizePlayer) {
+                if (parameters.contains("debug")) {
+                    getLogger().warning("ok: " + tier + " " + permissionsMode);
+                }
+            } else {
+                player.kickPlayer(config.getString("fail_message", "You are not authorized to join this server."));
             }
-            assignPermissions(player, uuid, parameters, tier);
-        } else {
-            player.kickPlayer(config.getString("fail_message", "You are not authorized to join this server."));
         }
+        assignPermissions(player, uuid, parameters, tier);
     }
     //permissionsMode
     private void assignPermissions(Player player, UUID uuid, String parameters, int tier) {

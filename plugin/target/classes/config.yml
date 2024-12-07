@@ -18,6 +18,7 @@ token: KEYHERE
 # Additional Parameters are as follows;
 # debug - This will output additional information to the console.
 # 2way - This will enable 2 way communication with the MCSync API for additional support. 
+# perms - This will disable the access management of mcsync and only manage permissions. 
 #        Please only enable this if instructed by MCSync Support.
 #default "none"
 parameters: none 
