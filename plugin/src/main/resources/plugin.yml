@@ -7,10 +7,8 @@ website : https://mcsync.live
 softdepend:
     - LuckPerms
 commands:
-    mcsync-reload:
-        description: Reloads the plugin configuration
     mcsync:
-        usage: /<command> [help|get|set]
+        usage: /<command> [help | get | set | reload]
         aliases: [mcs]
         description: Command for MCSync.
         permission: mcsync.admin

@@ -16,15 +16,25 @@
 token: KEYHERE
 
 # Additional Parameters are as follows;
+# You can have multiple parameters set at the same time, for example, you can have 
+#  parameters: debug perms
+#
 # debug - This will output additional information to the console.
-# 2way - This will enable 2 way communication with the MCSync API for additional support. 
-# perms - This will disable the access management of mcsync and only manage permissions. 
-#        Please only enable this if instructed by MCSync Support.
-#default "none"
+# 2way - This will enable 2 way communication with the MCSync API for additional support.
+#        Please only enable this if instructed by MCSync Support. 
+# perms - This will disable the Access Control of MCSync and only manage permissions. 
+#
+# default "none"
+
 parameters: none 
 
-#default "You are not authorized to join this server."
-fail_message: You are not authorized to join this server.
+# When modifying the fail message (or kick message) be sure to keep the ("") in the config line if you intend to use color codes
+#  You can use Minecraft Color codes using the "&" symbol.
+#  You can make text go to the next line using the "\n" escape notation.
+#
+# default "&6You are not authorized to join this server. \n &6Please join our discord to gain access \n\n &5https://discord.mcsync.live"
+
+fail_message: "&6You are not authorized to join this server. \n &6Please join our discord to gain access \n\n &5https://discord.mcsync.live"
 
 # permissionsMode Options
 #  group - Users will be assigned to this role name using LuckPerms

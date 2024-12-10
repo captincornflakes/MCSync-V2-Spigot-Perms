@@ -32,6 +32,7 @@ import net.luckperms.api.node.types.InheritanceNode;
 public class mcsync extends JavaPlugin implements Listener {
     private Metrics metrics;
     private LuckPerms luckPerms;
+    static mcsync instance;
     @SuppressWarnings("FieldMayBeFinal")
     private FileConfiguration config = getConfig();
     @SuppressWarnings("FieldMayBeFinal")
@@ -47,12 +48,12 @@ public class mcsync extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        super.onEnable();
         saveDefaultConfig();
+        instance = this;
         getServer().getPluginManager().registerEvents(this, this);
-        this.getCommand("mcsync-reload").setExecutor(new CommandMcsync());
+        this.getCommand("mcsync").setExecutor(new CommandMcsync(this));
         getLogger().info("MCSync has been enabled!");
-        String parameters = this.config.getString("parameters");
-        getLogger().info("MCSync parameters: " + parameters);
         //Enable Bstats
        // int pluginId = 24033;
         //metrics = new Metrics(this, pluginId);
@@ -184,7 +185,10 @@ public class mcsync extends JavaPlugin implements Listener {
                     getLogger().warning("ok: " + tier + " " + permissionsMode);
                 }
             } else {
-                player.kickPlayer(config.getString("fail_message", "You are not authorized to join this server."));
+
+                String configMessage = getConfig().getString("fail_message",  "You are not authorized to join this server.");
+                String coloredMessage = ChatColor.translateAlternateColorCodes('&', configMessage);
+                player.kickPlayer(coloredMessage);
             }
         }
         assignPermissions(player, uuid, parameters, tier);
@@ -272,32 +276,47 @@ public class mcsync extends JavaPlugin implements Listener {
 
     public class CommandMcsync implements CommandExecutor {
 
+        private final mcsync plugin; // Reference to the main plugin instance
+
+        public CommandMcsync(mcsync plugin) {
+            this.plugin = plugin;
+        }
+
         @Override
         public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-            String serverKey = config.getString("token");
-            if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
-                sender.sendMessage(ChatColor.LIGHT_PURPLE + ChatColor.STRIKETHROUGH.toString() + "--------------------------------------------");
-                sender.sendMessage(ChatColor.GOLD + "The following are valid commands for MCSync:");
-                sender.sendMessage(ChatColor.GOLD + "| " + ChatColor.YELLOW + "/mcs set" + ChatColor.GRAY + ChatColor.ITALIC + " (Used to set server token)");
-                sender.sendMessage(ChatColor.GOLD + "| " + ChatColor.YELLOW + "/mcs get" + ChatColor.GRAY + ChatColor.ITALIC + " (Show your server token)");
-                sender.sendMessage(ChatColor.LIGHT_PURPLE + ChatColor.STRIKETHROUGH.toString() + "--------------------------------------------");
-            } else if (args.length > 0) {
-                if (args[0].equalsIgnoreCase("set")) {
+            if (command.getName().equalsIgnoreCase("mcsync")) {
+                FileConfiguration config = plugin.getConfig(); // Access config dynamically
+                String prefix = plugin.prefix; // Use the prefix from the main class
+                String token = config.getString("token");
+    
+                if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
+                    // Help message
+                    sender.sendMessage(ChatColor.LIGHT_PURPLE + ChatColor.STRIKETHROUGH.toString() + "--------------------------------------------");
+                    sender.sendMessage(ChatColor.GOLD + "The following are valid commands for MCSync:");
+                    sender.sendMessage(ChatColor.GOLD + "| " + ChatColor.YELLOW + "/mcsync set <key>" + ChatColor.GRAY + ChatColor.ITALIC + " (Set server token)");
+                    sender.sendMessage(ChatColor.GOLD + "| " + ChatColor.YELLOW + "/mcsync get" + ChatColor.GRAY + ChatColor.ITALIC + " (Show your server token)");
+                    sender.sendMessage(ChatColor.GOLD + "| " + ChatColor.YELLOW + "/mcsync reload" + ChatColor.GRAY + ChatColor.ITALIC + " (Reload the config)");
+                    sender.sendMessage(ChatColor.LIGHT_PURPLE + ChatColor.STRIKETHROUGH.toString() + "--------------------------------------------");
+                } else if (args[0].equalsIgnoreCase("set")) {
                     if (args.length < 2) {
                         sender.sendMessage(prefix + ChatColor.RED + "Please supply a server key.");
                     } else {
-                        config.set("token", args[1]);
-                        sender.sendMessage(prefix + ChatColor.AQUA + "Server key set to " + ChatColor.GREEN + args[1]);
-                        saveConfig();
+                        String newToken = args[1];
+                        config.set("token", newToken);
+                        plugin.saveConfig(); // Save changes to the config
+                        sender.sendMessage(prefix + ChatColor.AQUA + "Server key set to " + ChatColor.GREEN + newToken);
                     }
                 } else if (args[0].equalsIgnoreCase("get")) {
-                    sender.sendMessage(prefix + ChatColor.AQUA + "Your server key is: " + ChatColor.GREEN + serverKey);
+                    sender.sendMessage(prefix + ChatColor.AQUA + "Your server key is: " + ChatColor.GREEN + token);
+                } else if (args[0].equalsIgnoreCase("reload")) {
+                    plugin.reloadConfig();
+                    sender.sendMessage(prefix + ChatColor.AQUA + "MCSync Configuration reloaded successfully!");
                 } else {
-                    sender.sendMessage(prefix + ChatColor.RED + "Unknown command.");
+                    sender.sendMessage(prefix + ChatColor.RED + "Unknown command. Use /mcsync help for a list of commands.");
                 }
+                return true;
             }
-            return true;
+            return false;
         }
     }
-
 }
