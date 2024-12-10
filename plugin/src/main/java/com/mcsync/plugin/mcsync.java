@@ -9,7 +9,6 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 import org.bstats.bukkit.Metrics;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -21,7 +20,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONObject;
 
@@ -29,6 +27,7 @@ import net.luckperms.api.LuckPerms;
 import net.luckperms.api.LuckPermsProvider;
 import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
+import net.luckperms.api.node.types.InheritanceNode;
 
 public class mcsync extends JavaPlugin implements Listener {
     private Metrics metrics;
@@ -54,26 +53,11 @@ public class mcsync extends JavaPlugin implements Listener {
         getLogger().info("MCSync has been enabled!");
         String parameters = this.config.getString("parameters");
         getLogger().info("MCSync parameters: " + parameters);
-
         //Enable Bstats
        // int pluginId = 24033;
         //metrics = new Metrics(this, pluginId);
         //getLogger().info("bStats initialized. " + isMetricsRunning());
-
-        // Check if LuckPerms plugin is available
-        Plugin plugin = Bukkit.getPluginManager().getPlugin("LuckPerms");
-        if (plugin != null && plugin.isEnabled()) {
-            try {
-                this.luckPerms = LuckPermsProvider.get();
-                System.out.println("LuckPerms is available and loaded.");
-            } catch (IllegalStateException e) {
-                System.out.println("LuckPerms is not loaded or not available.");
-                this.luckPerms = null;
-            }
-        } else {
-            System.out.println("LuckPerms plugin is not available.");
-            this.luckPerms = null;
-        }
+        this.luckPerms = LuckPermsProvider.get();
     }
     public boolean isMetricsRunning() {
         return metrics != null;
@@ -95,31 +79,57 @@ public class mcsync extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
+        // Suppress quit message if the player was kicked
         if (isKicked) {
             event.setQuitMessage(null);
             isKicked = false;
         }
 
-        if (luckPerms != null) {
-            String configFollower = config.getString("follower");
-            String configSubt1 = config.getString("sub-t1");
-            String configSubt2 = config.getString("sub-t2");
-            String configSubt3 = config.getString("sub-t3");
-            String configSubGifted = config.getString("sub-gifted");
-            String configStreamer = config.getString("streamer");
-            UUID uuid = event.getPlayer().getUniqueId();
-            LuckPerms api = LuckPermsProvider.get();
-            User user = api.getUserManager().getUser(uuid);
-            api.getUserManager().modifyUser(uuid, thisuser -> {
-                user.data().remove(Node.builder(configFollower).build());
-                user.data().remove(Node.builder(configSubt1).build());
-                user.data().remove(Node.builder(configSubt2).build());
-                user.data().remove(Node.builder(configSubt3).build());
-                user.data().remove(Node.builder(configSubGifted).build());
-                user.data().remove(Node.builder(configStreamer).build());
-            });
-        }
+        // Retrieve the UUID of the quitting player
+        UUID uuid = event.getPlayer().getUniqueId();
+        LuckPerms api = LuckPermsProvider.get();
+        User user = api.getUserManager().getUser(uuid);
+
+        // Retrieve the parameters and configuration keys
+        String parameters = config.getString("parameters", "").toLowerCase();
+        String permissionsMode = config.getString("permissionsMode", "node"); // Default to "node" if not set
+        String configFollower = config.getString("follower");
+        String configSubt1 = config.getString("sub-t1");
+        String configSubt2 = config.getString("sub-t2");
+        String configSubt3 = config.getString("sub-t3");
+        String configSubGifted = config.getString("sub-gifted");
+        String configStreamer = config.getString("streamer");
+
+        // Modify the user's permissions based on the permissionsMode
+        api.getUserManager().modifyUser(uuid, userMod -> {
+            if (userMod != null) {
+                if ("node".equalsIgnoreCase(permissionsMode)) {
+                    // If using node-based permissions, remove the corresponding nodes
+                    if (configFollower != null) userMod.data().remove(Node.builder(configFollower).build());
+                    if (configSubt1 != null) userMod.data().remove(Node.builder(configSubt1).build());
+                    if (configSubt2 != null) userMod.data().remove(Node.builder(configSubt2).build());
+                    if (configSubt3 != null) userMod.data().remove(Node.builder(configSubt3).build());
+                    if (configSubGifted != null) userMod.data().remove(Node.builder(configSubGifted).build());
+                    if (configStreamer != null) userMod.data().remove(Node.builder(configStreamer).build());
+                } else if ("group".equalsIgnoreCase(permissionsMode)) {
+                    // If using group-based permissions, remove the corresponding groups
+                    if (configFollower != null) userMod.data().remove(Node.builder("group." + configFollower).build());
+                    if (configSubt1 != null) userMod.data().remove(Node.builder("group." + configSubt1).build());
+                    if (configSubt2 != null) userMod.data().remove(Node.builder("group." + configSubt2).build());
+                    if (configSubt3 != null) userMod.data().remove(Node.builder("group." + configSubt3).build());
+                    if (configSubGifted != null) userMod.data().remove(Node.builder("group." + configSubGifted).build());
+                    if (configStreamer != null) userMod.data().remove(Node.builder("group." + configStreamer).build());
+                }
+            }
+
+            // Debug logging if "parameters" contains "debug"
+            if (parameters.contains("debug")) {
+                getLogger().warning("Removed permissions or group for user: " + uuid);
+            }
+        });
     }
+
+    
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -183,49 +193,82 @@ public class mcsync extends JavaPlugin implements Listener {
     private void assignPermissions(Player player, UUID uuid, String parameters, int tier) {
         if (luckPerms == null) {
             if (parameters.contains("debug")) {
-                getLogger().warning("Luckperms Null Error");
+                getLogger().warning("LuckPerms is not initialized!");
             }
             return;
         }
-        String permissionsMode = config.getString("permissionsMode");
-        if ("node".equals(permissionsMode)) {
-            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().remove(Node.builder(config.getString("overide")).build()));
-            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().remove(Node.builder(config.getString("sub-t1")).build()));
-            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().remove(Node.builder(config.getString("sub-t2")).build()));
-            luckPerms.getUserManager().modifyUser(uuid, user -> user.data().remove(Node.builder(config.getString("sub-t3")).build()));
-            if (tier == 0) {
-                luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("overide")).build()));
-            } else if (tier == 1) {
-                luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("sub-t1")).build()));
-            } else if (tier == 2) {
-                luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("sub-t2")).build()));
-            } else if (tier == 3) {
-                luckPerms.getUserManager().modifyUser(uuid, user -> user.data().add(Node.builder(config.getString("sub-t3")).build()));
+    
+        luckPerms.getUserManager().loadUser(uuid).thenAcceptAsync(user -> {
+            if (user == null) {
+                getLogger().warning("Failed to load user data for UUID: " + uuid);
+                return;
             }
-        }
-        else if ("group".equals(permissionsMode)){
-            luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().remove(Node.builder("group." + config.getString("overide")).build());});
-            luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().remove(Node.builder("group." + config.getString("sub-t1")).build());});
-            luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().remove(Node.builder("group." + config.getString("sub-t2")).build());});
-            luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().remove(Node.builder("group." + config.getString("sub-t3")).build());});
-            if (tier == 0) {
-                luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().add(Node.builder("group." + config.getString("overide")).build());});
-            } else if (tier == 1) {
-                luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().add(Node.builder("group." + config.getString("sub-t1")).build());});
-            } else if (tier == 2) {
-                luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().add(Node.builder("group." + config.getString("sub-t2")).build());});
-            } else if (tier == 3) {
-                luckPerms.getUserManager().modifyUser(uuid, user -> {user.data().add(Node.builder("group." + config.getString("sub-t3")).build());});
+
+            
+    
+            String permissionsMode = config.getString("permissionsMode");
+            luckPerms.getUserManager().modifyUser(uuid, userMod -> {
+                
+                userMod.data().remove(Node.builder("group." + config.getString("overide")).build());
+                userMod.data().remove(Node.builder("group." + config.getString("sub-t1")).build());
+                userMod.data().remove(Node.builder("group." + config.getString("sub-t1")).build());
+                userMod.data().remove(Node.builder("group." + config.getString("sub-t3")).build());
+                
+                userMod.data().remove(Node.builder("" + config.getString("overide")).build());
+                userMod.data().remove(Node.builder("" + config.getString("sub-t1")).build());
+                userMod.data().remove(Node.builder("" + config.getString("sub-t1")).build());
+                userMod.data().remove(Node.builder("" + config.getString("sub-t3")).build());
+
+                if ("node".equalsIgnoreCase(permissionsMode)) {
+                    // Handle node-based permissions
+                    String newNodeKey = null;
+                    if (tier == 0) {
+                        newNodeKey = config.getString("overide", "default.override");
+                    } else if (tier == 1) {
+                        newNodeKey = config.getString("sub-t1", "default.sub-t1");
+                    } else if (tier == 2) {
+                        newNodeKey = config.getString("sub-t2", "default.sub-t2");
+                    } else if (tier == 3) {
+                        newNodeKey = config.getString("sub-t3", "default.sub-t3");
+                    }
+                    // Validate newNodeKey
+                    if (newNodeKey == null || newNodeKey.isEmpty()) {
+                        getLogger().warning("Failed to assign a valid node key for tier " + tier);
+                        return;
+                    }
+                    getLogger().info("Assigning node key: " + newNodeKey);
+                    // Add the new node
+                    userMod.data().add(Node.builder(newNodeKey).build());
+                }
+                
+                else if ("group".equalsIgnoreCase(permissionsMode)) {
+                    String newGroup = null;
+                    if (tier == 0) {
+                        newGroup = config.getString("overide");
+                    } else if (tier == 1) {
+                        newGroup = config.getString("sub-t1");
+                    } else if (tier == 2) {
+                        newGroup = config.getString("sub-t2");
+                    } else if (tier == 3) {
+                        newGroup = config.getString("sub-t3");
+                    }
+                    if (newGroup != null) {
+                        userMod.data().add(InheritanceNode.builder(newGroup).build());
+                        }
+                        
+                    }
+            else {
+                    getLogger().warning("Unknown permissions mode: " + permissionsMode);
+                }
+            });
+            if (parameters.contains("debug")) {
+                getLogger().info("Permissions assigned for " + player.getName() + " (Tier: " + tier + ", Mode: " + permissionsMode + ")");
             }
-        }
-        else {
-            getLogger().warning("Undetermined Group/Node: " + permissionsMode);
-        }
-        if (parameters.contains("debug")) {
-            getLogger().warning("Tier: " + tier + " " + permissionsMode);
-        }
-        return;
+        });
     }
+    
+    
+    
 
     public class CommandMcsync implements CommandExecutor {
 
