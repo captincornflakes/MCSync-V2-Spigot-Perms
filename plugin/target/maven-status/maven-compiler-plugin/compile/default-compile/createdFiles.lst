@@ -1,2 +1,3 @@
-com\mcsync\plugin\mcsync$CommandMcsync.class
 com\mcsync\plugin\mcsync.class
+com\mcsync\plugin\CommandMcsync.class
+com\mcsync\plugin\McsyncEventListener.class
