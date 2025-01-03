@@ -26,3 +26,4 @@ plugin/compile.bat
 plugin/copyjar.bat
 /plugin/target
 /plugin/target
+*.bat
