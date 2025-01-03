@@ -58,7 +58,7 @@ public class LuckPermsAccess implements Listener {
 
         String permissionsMode = getConfig().getString("permissionsMode", "node").toLowerCase();
         String[] permissionNodes = {
-            getConfig().getString("overide"),
+            getConfig().getString("override"),
             getConfig().getString("sub-t1"),
             getConfig().getString("sub-t2"),
             getConfig().getString("sub-t3")
@@ -162,7 +162,7 @@ public class LuckPermsAccess implements Listener {
             } else if (tier == 3) {
                 permissionNode = getConfig().getString("sub-t3");
             } else {
-                permissionNode = getConfig().getString("overide");
+                permissionNode = getConfig().getString("override");
             }
     
             if (permissionNode != null) {
