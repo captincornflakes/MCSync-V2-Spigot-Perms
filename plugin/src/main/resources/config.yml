@@ -42,7 +42,7 @@ fail_message: "&6You are not authorized to join this server. \n &6Please join ou
 
 permissionsMode: group
 
-overide: mcsyncPermissions.Overide
+override: mcsyncPermissions.Override
 sub-t1: mcsyncPermissions.SubTier1
 sub-t2: mcsyncPermissions.SubTier2
 sub-t3: mcsyncPermissions.SubTier3

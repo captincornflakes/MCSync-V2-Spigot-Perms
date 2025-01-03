@@ -19,11 +19,11 @@ public class mcsync extends JavaPlugin {
         if (luckPermsPlugin != null && luckPermsPlugin.isEnabled()) {
             // LuckPerms is present and enabled
             getServer().getPluginManager().registerEvents(new LuckPermsAccess(this), this);
-            getLogger().info("Loaded with LuckPerms support.");
+            getLogger().info("Loaded with LuckPerms support. MCSync is controlling user group mangement when they join.");
         } else {
             // LuckPerms is not present; load a different class
             getServer().getPluginManager().registerEvents(new RegularAccess(this), this);
-            getLogger().info("LuckPerms not found. Loaded default access.");
+            getLogger().info("LuckPerms not found. MCSync will only handle Access Control to your server.");
         }
 
         // Register commands
