@@ -3,7 +3,7 @@ setlocal
 
 rem Define source and destination directories
 set "source=.\target"
-set "destination=F:\Workspace\Spigot test server\plugins"
+set "destination=C:\Users\chron\OneDrive\Documents\GitHub\TestingMinecraftPlugins\server_files\plugins"
 
 rem Create the destination directory if it doesn't exist
 if not exist "%destination%" (
