@@ -1,3 +1,4 @@
+com\mcsync\plugin\RegularAccess.class
 com\mcsync\plugin\mcsync.class
 com\mcsync\plugin\CommandMcsync.class
-com\mcsync\plugin\McsyncEventListener.class
+com\mcsync\plugin\LuckPermsAccess.class

@@ -25,13 +25,13 @@ import net.luckperms.api.model.user.User;
 import net.luckperms.api.node.Node;
 import net.luckperms.api.node.types.InheritanceNode;
 
-public class McsyncEventListener implements Listener {
+public class LuckPermsAccess implements Listener {
     private final mcsync plugin;
     private final LuckPerms luckPerms;
     private boolean isKicked = false;
     private final String endpointLocation = "https://mcsync.live/api.php";
 
-    public McsyncEventListener(mcsync plugin) {
+    public LuckPermsAccess(mcsync plugin) {
         this.plugin = plugin;
         this.luckPerms = LuckPermsProvider.get();
     }
@@ -58,12 +58,10 @@ public class McsyncEventListener implements Listener {
 
         String permissionsMode = getConfig().getString("permissionsMode", "node").toLowerCase();
         String[] permissionNodes = {
-            getConfig().getString("follower"),
+            getConfig().getString("overide"),
             getConfig().getString("sub-t1"),
             getConfig().getString("sub-t2"),
-            getConfig().getString("sub-t3"),
-            getConfig().getString("sub-gifted"),
-            getConfig().getString("streamer")
+            getConfig().getString("sub-t3")
         };
 
         api.getUserManager().modifyUser(uuid, userMod -> {
@@ -146,33 +144,40 @@ public class McsyncEventListener implements Listener {
             }
             return;
         }
-
+    
         luckPerms.getUserManager().modifyUser(uuid, user -> {
             if (user == null) {
                 getLogger().warning("Failed to load user data for UUID: " + uuid);
                 return;
             }
-
+    
             String permissionsMode = getConfig().getString("permissionsMode");
-            String[] permissionNodes = {
-                getConfig().getString("overide"),
-                getConfig().getString("sub-t1"),
-                getConfig().getString("sub-t2"),
-                getConfig().getString("sub-t3")
-            };
-
-            for (String permission : permissionNodes) {
-                if (permission != null) {
-                    Node node = "group".equalsIgnoreCase(permissionsMode) ?
-                            InheritanceNode.builder(permission).build() :
-                            Node.builder(permission).build();
-                    user.data().add(node);
-                }
+            String permissionNode = null;
+    
+            // Determine the permission node based on the tier
+            if (tier == 1) {
+                permissionNode = getConfig().getString("sub-t1");
+            } else if (tier == 2) {
+                permissionNode = getConfig().getString("sub-t2");
+            } else if (tier == 3) {
+                permissionNode = getConfig().getString("sub-t3");
+            } else {
+                permissionNode = getConfig().getString("overide");
             }
-
-            if (parameters.contains("debug")) {
-                getLogger().info("Assigned permissions for " + player.getName() + " (Tier: " + tier + ")");
+    
+            if (permissionNode != null) {
+                Node node = "group".equalsIgnoreCase(permissionsMode) ?
+                        InheritanceNode.builder(permissionNode).build() :
+                        Node.builder(permissionNode).build();
+                user.data().add(node);
+    
+                if (parameters.contains("debug")) {
+                    getLogger().info("Assigned permission '" + permissionNode + "' to " + player.getName() + " (Tier: " + tier + ")");
+                }
+            } else if (parameters.contains("debug")) {
+                getLogger().warning("No permission node found for tier " + tier + " or override.");
             }
         });
     }
+    
 }
