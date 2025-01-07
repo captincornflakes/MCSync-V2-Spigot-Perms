@@ -1,6 +1,6 @@
 name: MCSync
 main: com.mcsync.plugin.mcsync
-version: '1.2.0'
+version: '2.1.0'
 api-version: 1.13
 load: STARTUP
 author: MCSync
