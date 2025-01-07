@@ -8,12 +8,19 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class mcsync extends JavaPlugin {
     private FileConfiguration config;
 
+
     @Override
     public void onEnable() {
         // Load configuration
         saveDefaultConfig();
         config = getConfig();
 
+        int pluginId = 24033;
+        @SuppressWarnings("unused")
+        Metrics metrics = new Metrics(this, pluginId);
+        if (metrics != null){
+            getLogger().info("MCSync has Bstats enabled!");
+        }
         // Register events
         Plugin luckPermsPlugin = Bukkit.getPluginManager().getPlugin("LuckPerms");
         if (luckPermsPlugin != null && luckPermsPlugin.isEnabled()) {
@@ -34,6 +41,8 @@ public class mcsync extends JavaPlugin {
         }
 
         getLogger().info("MCSync has been enabled!");
+
+
     }
 
     @Override
@@ -43,4 +52,5 @@ public class mcsync extends JavaPlugin {
     public FileConfiguration getPluginConfig() {
         return config;
     }
+
 }
