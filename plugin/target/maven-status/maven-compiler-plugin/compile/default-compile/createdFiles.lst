@@ -10,6 +10,7 @@ com\mcsync\plugin\Metrics$JsonObjectBuilder$JsonObject.class
 com\mcsync\plugin\Metrics$SingleLineChart.class
 com\mcsync\plugin\RegularAccess.class
 com\mcsync\plugin\Metrics$MultiLineChart.class
+com\mcsync\plugin\chatToDiscord.class
 com\mcsync\plugin\Metrics$CustomChart.class
 com\mcsync\plugin\Metrics$DrilldownPie.class
 com\mcsync\plugin\Metrics$JsonObjectBuilder.class

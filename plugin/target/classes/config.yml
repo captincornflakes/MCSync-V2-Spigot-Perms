@@ -46,3 +46,7 @@ override: mcsyncPermissions.Override
 sub-t1: mcsyncPermissions.SubTier1
 sub-t2: mcsyncPermissions.SubTier2
 sub-t3: mcsyncPermissions.SubTier3
+
+# Send Minecraft Chat to your Discord server using a webhook.
+discordWebhookEnabled: false
+discordWebhookURL: ''

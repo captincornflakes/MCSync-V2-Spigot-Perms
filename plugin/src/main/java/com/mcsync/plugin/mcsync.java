@@ -21,6 +21,12 @@ public class mcsync extends JavaPlugin {
         if (metrics != null){
             getLogger().info("MCSync has Bstats enabled!");
         }
+
+        // Check if Discord Webhook is enabled.
+        if (config.getBoolean("discordWebhookEnabled")){
+            getServer().getPluginManager().registerEvents(new chatToDiscord(this), this);
+        }
+        
         // Register events
         Plugin luckPermsPlugin = Bukkit.getPluginManager().getPlugin("LuckPerms");
         if (luckPermsPlugin != null && luckPermsPlugin.isEnabled()) {
@@ -39,7 +45,6 @@ public class mcsync extends JavaPlugin {
         } else {
             getLogger().severe("Failed to register command: mcsync");
         }
-
         getLogger().info("MCSync has been enabled!");
 
 
