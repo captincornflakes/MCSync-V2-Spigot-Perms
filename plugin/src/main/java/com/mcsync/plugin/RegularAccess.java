@@ -9,6 +9,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 import static org.bukkit.Bukkit.getLogger;
+import static org.bukkit.Bukkit.getServer;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -104,6 +105,10 @@ public class RegularAccess implements Listener {
             }
         }
 
+	    if (getServer().getWhitelistedPlayers().stream().anyMatch(whitelistedPlayer -> whitelistedPlayer.getUniqueId().equals(uuid))) {
+            authorizePlayer = true;
+        }
+        
         if (!authorizePlayer) {
             String failMessage = ChatColor.translateAlternateColorCodes('&',
                 getConfig().getString("fail_message", "You are not authorized to join this server."));
