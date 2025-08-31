@@ -16,3 +16,4 @@ com\mcsync\plugin\Metrics$DrilldownPie.class
 com\mcsync\plugin\Metrics$JsonObjectBuilder.class
 com\mcsync\plugin\Metrics$SimpleBarChart.class
 com\mcsync\plugin\Metrics$AdvancedBarChart.class
+com\mcsync\plugin\Auth.class

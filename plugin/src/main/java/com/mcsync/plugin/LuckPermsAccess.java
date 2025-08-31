@@ -1,21 +1,15 @@
 package com.mcsync.plugin;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.UUID;
-import java.util.logging.Level;
 
 import static org.bukkit.Bukkit.getLogger;
 import static org.bukkit.Bukkit.getServer;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent.Result;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.json.JSONObject;
@@ -30,7 +24,6 @@ public class LuckPermsAccess implements Listener {
     private final mcsync plugin;
     private final LuckPerms luckPerms;
     private boolean isKicked = false;
-    private final String endpointLocation = "https://mcsync.live/api.php";
 
     public LuckPermsAccess(mcsync plugin) {
         this.plugin = plugin;
@@ -52,11 +45,9 @@ public class LuckPermsAccess implements Listener {
             event.setQuitMessage(null);
             isKicked = false;
         }
-
         UUID uuid = event.getPlayer().getUniqueId();
         LuckPerms api = LuckPermsProvider.get();
         User user = api.getUserManager().getUser(uuid);
-
         String permissionsMode = getConfig().getString("permissionsMode", "node").toLowerCase();
         String[] permissionNodes = {
             getConfig().getString("override"),
@@ -64,7 +55,6 @@ public class LuckPermsAccess implements Listener {
             getConfig().getString("sub-t2"),
             getConfig().getString("sub-t3")
         };
-
         api.getUserManager().modifyUser(uuid, userMod -> {
             if (userMod == null) return;
 
@@ -77,111 +67,72 @@ public class LuckPermsAccess implements Listener {
                 }
             }
 
-            if (getConfig().getString("parameters", "").toLowerCase().contains("debug")) {
-                getLogger().warning("Removed permissions for user: " + uuid);
-            }
+            if (getConfig().getString("parameters", "").toLowerCase().contains("debug")) {getLogger().warning("Removed permissions for user: " + uuid);}
         });
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player player = event.getPlayer();
-        UUID uuid = player.getUniqueId();
+    public void onPlayerJoin(AsyncPlayerPreLoginEvent event) {
+        String playerName = event.getName();
+        UUID uuid = event.getUniqueId();
         String token = getConfig().getString("token");
         String parameters = getConfig().getString("parameters", "").toLowerCase();
-        boolean authorizePlayer = player.isWhitelisted();
+        String failMessage = ChatColor.translateAlternateColorCodes('&', getConfig().getString("fail_message", "You are not authorized to join this server."));
+        if (parameters.contains("debug")) { getLogger().info("PlayerJoin: " + playerName + " Token: " + token + " UUID: " + uuid);}
+        
+        if (getServer().getWhitelistedPlayers().stream().anyMatch(whitelistedPlayer -> whitelistedPlayer.getUniqueId().equals(uuid))) {
+            event.allow();
+            assignPermissions(playerName, uuid, parameters, 0);
+            if (parameters.contains("debug")) {getLogger().info("User is Whitelisted: " + playerName);}
+            return;
+        }
+
         int tier = 0;
-
-        if (parameters.contains("debug")) {
-            getLogger().info("PlayerJoin: " + player.getName());
-            getLogger().info("Token: " + token);
-            getLogger().info("UUID: " + uuid);
-        }
-
-        HttpURLConnection connection = null;
+        boolean authorizePlayer = false;
         try {
-            URL url = new URL(endpointLocation + "?token=" + token + "&uuid=" + uuid.toString().replace("-", ""));
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0");
-
-            if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                try (BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                    StringBuilder response = new StringBuilder();
-                    String inputLine;
-                    while ((inputLine = in.readLine()) != null) {
-                        response.append(inputLine);
-                    }
-                    JSONObject data = new JSONObject(response.toString());
-                    authorizePlayer = data.getBoolean("subscriber");
-                    tier = data.getInt("tier");
-
-                    if (parameters.contains("debug")) {
-                        getLogger().info("Response: " + response);
-                    }
-                }
+            String authResult = Auth.check(token, uuid.toString().replace("-", ""), parameters);
+            JSONObject resultObj = new JSONObject(authResult);
+            authorizePlayer = resultObj.optBoolean("authorizePlayer", false);
+            tier = resultObj.optInt("tier", 0);
+            } 
+        catch (Exception e) {
+            getLogger().warning("Failed to parse auth result: " + e.getMessage());
             }
-        } catch (IOException e) {
-            getLogger().log(Level.SEVERE, "Error during HTTP request: {0}", e.getMessage());
-        } finally {
-            if (connection != null) {
-                connection.disconnect();
-            }
-        }
-
-	    if (getServer().getWhitelistedPlayers().stream().anyMatch(whitelistedPlayer -> whitelistedPlayer.getUniqueId().equals(uuid))) {
-            authorizePlayer = true;
-        }
+        if (parameters.contains("debug")) {getLogger().info("finalAuthorizePlayer: " + authorizePlayer + " finalTier: " + tier);}
         if (!authorizePlayer) {
-            String failMessage = ChatColor.translateAlternateColorCodes('&',
-                getConfig().getString("fail_message", "You are not authorized to join this server."));
-            player.kickPlayer(failMessage);
-        } else {
-            assignPermissions(player, uuid, parameters, tier);
+            if (parameters.contains("debug")) {getLogger().info("Called Final Kick");}
+            event.disallow(Result.KICK_OTHER, failMessage);
+            } 
+        else {
+            if (parameters.contains("debug")) {getLogger().info("Called Final Perm set");}
+            assignPermissions(playerName, uuid, parameters, tier);
         }
     }
 
-    private void assignPermissions(Player player, UUID uuid, String parameters, int tier) {
+    private void assignPermissions(String player, UUID uuid, String parameters, int tier) {
         if (luckPerms == null) {
-            if (parameters.contains("debug")) {
-                getLogger().warning("LuckPerms is not initialized!");
-            }
+            if (parameters.contains("debug")) { getLogger().warning("LuckPerms is not initialized!");}
             return;
-        }
-    
+            }
         luckPerms.getUserManager().modifyUser(uuid, user -> {
-            if (user == null) {
-                getLogger().warning("Failed to load user data for UUID: " + uuid);
+            if (user == null) {getLogger().warning("Failed to load user data for UUID: " + uuid);
                 return;
             }
-    
             String permissionsMode = getConfig().getString("permissionsMode");
             String permissionNode = null;
-    
-            // Determine the permission node based on the tier
-            if (tier == 1) {
-                permissionNode = getConfig().getString("sub-t1");
-            } else if (tier == 2) {
-                permissionNode = getConfig().getString("sub-t2");
-            } else if (tier == 3) {
-                permissionNode = getConfig().getString("sub-t3");
-            } else {
-                permissionNode = getConfig().getString("override");
-            }
-    
+            if (tier == 1) { permissionNode = getConfig().getString("sub-t1");} 
+            else if (tier == 2) {permissionNode = getConfig().getString("sub-t2");}
+            else if (tier == 3) {permissionNode = getConfig().getString("sub-t3");}
+            else {permissionNode = getConfig().getString("override");}
             if (permissionNode != null) {
                 Node node = "group".equalsIgnoreCase(permissionsMode) ?
                         InheritanceNode.builder(permissionNode).build() :
                         Node.builder(permissionNode).build();
                 user.data().add(node);
-    
-                if (parameters.contains("debug")) {
-                    getLogger().info("Assigned permission '" + permissionNode + "' to " + player.getName() + " (Tier: " + tier + ")");
-                }
-            } else if (parameters.contains("debug")) {
-                getLogger().warning("No permission node found for tier " + tier + " or override.");
-            }
+                if (parameters.contains("debug")) {getLogger().info("Assigned permission '" + permissionNode + "' to " + player + " (Tier: " + tier + ")");}
+            } 
+            else if (parameters.contains("debug")) {getLogger().warning("No permission node found for tier " + tier + " or override.");}
         });
     }
-    
+
 }
