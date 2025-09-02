@@ -12,7 +12,7 @@ import org.json.JSONObject;
 
 public class Auth {
     public static String check(String token, String uuid, String parameters) {
-        boolean authorizePlayer = false;
+        boolean authorize = false;
         int tier = 0;
         try {
             URL url = new URL("https://mcsync.live/api.php?token=" + token + "&uuid=" + uuid.replace("-", ""));
@@ -27,7 +27,7 @@ public class Auth {
                         response.append(inputLine);
                     }
                     JSONObject data = new JSONObject(response.toString());
-                    authorizePlayer = data.getBoolean("subscriber");
+                    authorize = data.getBoolean("subscriber");
                     tier = data.getInt("tier");
 
                     if (parameters.contains("debug")) {getLogger().info("Response: " + response);}
@@ -43,7 +43,7 @@ public class Auth {
             e.printStackTrace();
         }
         JSONObject result = new JSONObject();
-        result.put("authorize", authorizePlayer);
+        result.put("authorize", authorize);
         result.put("tier", tier);
         if (parameters.contains("debug")) {
             getLogger().info("Auth check return result: " + result);
