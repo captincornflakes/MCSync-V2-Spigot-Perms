@@ -1,14 +1,14 @@
 com\mcsync\plugin\Metrics$AdvancedPie.class
+com\mcsync\plugin\PermissionAssigner.class
 com\mcsync\plugin\mcsync.class
 com\mcsync\plugin\CommandMcsync.class
-com\mcsync\plugin\LuckPermsAccess.class
 com\mcsync\plugin\Metrics.class
 com\mcsync\plugin\Metrics$1.class
 com\mcsync\plugin\Metrics$SimplePie.class
 com\mcsync\plugin\Metrics$MetricsBase.class
 com\mcsync\plugin\Metrics$JsonObjectBuilder$JsonObject.class
 com\mcsync\plugin\Metrics$SingleLineChart.class
-com\mcsync\plugin\RegularAccess.class
+com\mcsync\plugin\AsyncLoginGate.class
 com\mcsync\plugin\Metrics$MultiLineChart.class
 com\mcsync\plugin\chatToDiscord.class
 com\mcsync\plugin\Metrics$CustomChart.class
@@ -16,3 +16,4 @@ com\mcsync\plugin\Metrics$DrilldownPie.class
 com\mcsync\plugin\Metrics$JsonObjectBuilder.class
 com\mcsync\plugin\Metrics$SimpleBarChart.class
 com\mcsync\plugin\Metrics$AdvancedBarChart.class
+com\mcsync\plugin\Auth.class
