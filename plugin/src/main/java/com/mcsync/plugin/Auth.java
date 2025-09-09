@@ -15,7 +15,7 @@ public class Auth {
         boolean authorize = false;
         int tier = 0;
         try {
-            URL url = new URL("https://mcsync.live/api.php?token=" + token + "&uuid=" + uuid.replace("-", ""));
+            URL url = new URL("https://api.mcsync.live/?token=" + token + "&uuid=" + uuid.replace("-", ""));
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("User-Agent", "Mozilla/5.0");
@@ -30,9 +30,10 @@ public class Auth {
                     authorize = data.getBoolean("subscriber");
                     tier = data.getInt("tier");
 
-                    if (parameters.contains("debug")) {getLogger().info("Response: " + response);}
-                } 
-                catch (IOException ex) {
+                    if (parameters.contains("debug")) {
+                        getLogger().info("Response: " + response);
+                    }
+                } catch (IOException ex) {
                     getLogger().info("Error: No API response");
                 }
             }
